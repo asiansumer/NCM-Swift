@@ -1,38 +1,13 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { Toaster } from 'sonner';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
-import { ThemeProvider } from '@/components/theme-provider';
-
-const inter = Inter({
-  subsets: ["latin"],
-});
+import type { Metadata } from 'next';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "NCM Swift - 高效音乐格式转换工具",
-  description: "简洁高效的NCM音乐格式转换工具，支持转换为MP3和FLAC格式，操作简单，转换快速。",
-  generator: 'Next.js'
+  metadataBase: new URL('https://www.ncmswift.xyz'),
+  title: 'NCM Swift — NCM 转 MP3',
+  description: '免费在线 NCM 转 MP3，支持批量转换、试听与打包下载。文件仅在浏览器本地处理，无需上传。',
+  alternates: { canonical: '/' },
+  openGraph: { title: 'NCM Swift — NCM 转 MP3', description: '选择文件，转换，下载。所有音频都在你的设备上处理。', url: '/' },
 };
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="zh-CN" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
-          <Toaster richColors />
-        </ThemeProvider>
-      </body>
-    </html>
-  );
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <html lang="zh-CN"><body>{children}</body></html>;
 }

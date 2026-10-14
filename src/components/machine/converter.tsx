@@ -154,7 +154,7 @@ export default function Converter() {
         </div>
         {isDragActive && <div className="drop-overlay"><PiPlus size={30}/><span>松开，开始转换</span></div>}
       </section>
-      <footer className="machine-footer"><span>文件仅在你的设备上处理</span><span>© {new Date().getFullYear()} NCM SWIFT</span></footer>
+      <footer className="machine-footer"><span>文件仅在你的设备上处理</span><a href="https://github.com/asiansumer/NCM-Swift" target="_blank" rel="noopener noreferrer" aria-label="查看源代码与开源许可">© {new Date().getFullYear()} NCM SWIFT</a></footer>
     </div>
   </div>;
 }

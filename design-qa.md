@@ -39,3 +39,7 @@ No actionable P0/P1/P2 visual findings remain within the requested scope.
 ## Limits of this verification
 
 Tests use original synthetic NCM fixtures, not a user's music library. Responsive checks use browser viewports, not physical phones. Physical-device Safari/Firefox, prolonged large-file runs and cancellation during an active long encode were not exercised. Cancellation and worker/object-URL cleanup are implemented, but those cases are not claimed as browser-verified here.
+
+## Production smoke check
+
+The deployed site at https://www.ncmswift.xyz successfully converted the synthetic FLAC-containing NCM to a 122 KB MP3. The machine, result row, preview and download controls rendered with no browser console errors. The apex domain redirects to www.

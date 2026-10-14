@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 
 // Original synthetic tones only. No downloaded music or user library files.
-export function wrapNcm(audio, metadata = {}) {
+export function wrapNcm(audio, metadata = {}, cover = Buffer.alloc(0), padding = 0) {
   const aes = (data, key) => { const cipher = createCipheriv('aes-128-ecb', Buffer.from(key, 'hex'), null); return Buffer.concat([cipher.update(data), cipher.final()]); };
   const u32 = n => { const b = Buffer.alloc(4); b.writeUInt32LE(n); return b; };
   const key = Buffer.from('swift-test-audio-key');
@@ -17,7 +17,7 @@ export function wrapNcm(audio, metadata = {}) {
   for (let i = 0; i < 256; i++) { j = (j + box[i] + key[i % key.length]) % 256; const tmp = box[i]; box[i] = box[j]; box[j] = tmp; }
   const encrypted = Buffer.from(audio);
   for (let i = 0; i < encrypted.length; i++) { const k = (i + 1) % 256; encrypted[i] ^= box[(box[k] + box[(box[k] + k) % 256]) % 256]; }
-  const header = Buffer.concat([Buffer.from('CTENFDAM'), Buffer.alloc(2), u32(keyBlock.length), keyBlock, u32(meta.length), meta, Buffer.alloc(13)]);
+  const header = Buffer.concat([Buffer.from('CTENFDAM'), Buffer.alloc(2), u32(keyBlock.length), keyBlock, u32(meta.length), meta, Buffer.alloc(5), u32(cover.length + padding), u32(cover.length), cover, Buffer.alloc(padding)]);
   return Buffer.concat([header, encrypted]);
 }
 if (process.argv[1] === new URL(import.meta.url).pathname) {

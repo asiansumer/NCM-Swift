@@ -195,6 +195,7 @@ export default function MachineScene({ time, playing, count, reduced, onStart, d
           targets[i].style.opacity=handoff>=1?'1':'0';
           const reveal=smoother((handoff-.70)/.30);rows[i].style.opacity=String(reveal);rows[i].style.clipPath=`inset(0 ${(1-reveal)*100}% 0 0)`;rows[i].style.transform=`translateX(${-8*(1-reveal)}px)`;
           rowLines[i].style.setProperty('--row-reveal',String(reveal));
+          rowLines[i].style.setProperty('--cover-reveal',String(smoother((t-HANDOFF_START-i*HANDOFF_STAGGER-HANDOFF_DURATION)/.28)));
         }
       });
       for(let i=3;i<targets.length;i++){
@@ -202,6 +203,7 @@ export default function MachineScene({ time, playing, count, reduced, onStart, d
         targets[i].style.opacity=String(reveal);rows[i].style.opacity=String(reveal);
         rows[i].style.clipPath='none';rows[i].style.transform=`translateY(${(1-reveal)*8}px)`;
         rowLines[i].style.setProperty('--row-reveal',String(reveal));
+        rowLines[i].style.setProperty('--cover-reveal',String(reveal));
       }
       headings.forEach(el=>{el.style.opacity=String(smooth((t-5.02)/.52));});
       glow.intensity=state===3?.28*Math.sin((t-2.3)/1.35*Math.PI):.015;

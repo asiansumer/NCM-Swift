@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useDropzone, type FileRejection } from 'react-dropzone';
-import { PiArrowRight, PiArrowDown, PiPlus, PiPlayFill, PiPauseFill, PiDownloadSimple, PiX } from 'react-icons/pi';
+import { PiArrowRight, PiArrowDown, PiPlus, PiPlayFill, PiPauseFill, PiDownloadSimple, PiMusicNote, PiX } from 'react-icons/pi';
 import { DURATION } from './timeline';
 import { convertFile, uniqueName, MAX_FILE_SIZE, type ConvertedFile } from '@/lib/convert';
 import '@/app/machine/machine.css';
@@ -80,7 +80,9 @@ export default function Converter() {
         const result = await convertFile(files[i], abort.signal, percent => setProgress({ done: i, total: files.length, percent: (i + percent / 100) / files.length * 100 }));
         if (abort.signal.aborted) break;
         const url = URL.createObjectURL(result.blob); urls.current.push(url);
-        completed.push({ ...result, id: crypto.randomUUID(), name: uniqueName(files[i].name, used), url });
+        const coverUrl = result.cover ? URL.createObjectURL(result.cover) : undefined;
+        if (coverUrl) urls.current.push(coverUrl);
+        completed.push({ ...result, coverUrl, id: crypto.randomUUID(), name: uniqueName(files[i].name, used), url });
         ownedResults.current = [...completed]; setResults([...completed]);
       } catch (error) {
         if (abort.signal.aborted) break;
@@ -145,9 +147,9 @@ export default function Converter() {
           <MachineScene time={time} playing={playing} count={count} reduced={reduced} onStart={chooseFiles} dock={dock}/>
           <section ref={dock} className="result-dock" id="results" aria-label="转换结果" aria-hidden={!arrived} inert={!arrived}>
             <div className="dock-heading" data-dock-heading><label className="select-all"><input type="checkbox" aria-label="全选文件" checked={results.length > 0 && selected.length === results.length} onChange={() => setSelected(selected.length === results.length ? [] : results.map(item => item.id))}/>全选<span>{results.length}</span></label><button className="batch-download" onClick={downloadZip} disabled={!selected.length || zipBusy}><PiDownloadSimple size={17}/>{zipBusy ? '打包中…' : `打包下载${selected.length ? ` · ${selected.length}` : ''}`}</button></div>
-            <div className="track-list">{results.map((item, i) => <div className="track-row" key={item.id} data-result-row>
-              <div className="track-art" data-ticket-target><img src="/machine/ticket.jpg" alt=""/><span>{String(i + 1).padStart(2, '0')}</span></div>
-              <div className="track-reveal" data-row-reveal><label className="select-track"><input type="checkbox" aria-label={'选择 ' + item.name} checked={selected.includes(item.id)} onChange={() => setSelected(previous => previous.includes(item.id) ? previous.filter(id => id !== item.id) : [...previous, item.id])}/></label><div className="track-name"><h2 title={item.name}>{item.title}</h2><p>{item.artist ? item.artist + ' · ' : ''}MP3 · {item.blob.size < 1048576 ? Math.max(1, Math.round(item.blob.size / 1024)) + ' KB' : (item.blob.size / 1048576).toFixed(1) + ' MB'}</p></div><button className="track-play" onClick={() => toggleAudio(item)} aria-label={(audioId === item.id ? '暂停 ' : '试听 ') + item.name}>{audioId === item.id ? <PiPauseFill size={13}/> : <PiPlayFill size={13}/>}</button><a className="track-download" href={item.url} download={item.name} aria-label={'下载 ' + item.name}><PiArrowDown size={18}/></a></div>
+            <div className="track-list">{results.map(item => <div className="track-row" key={item.id} data-result-row>
+              <div className="track-art"><div className="track-ticket" data-ticket-target><img src="/machine/ticket.jpg" alt=""/></div><div className="track-cover">{item.coverUrl ? <img src={item.coverUrl} alt={item.album ? item.album + ' 封面' : item.title + ' 封面'}/> : <PiMusicNote size={21}/>}</div></div>
+              <div className="track-reveal" data-row-reveal><label className="select-track"><input type="checkbox" aria-label={'选择 ' + item.name} checked={selected.includes(item.id)} onChange={() => setSelected(previous => previous.includes(item.id) ? previous.filter(id => id !== item.id) : [...previous, item.id])}/></label><div className="track-name"><h2 title={item.name}>{item.title}</h2><p title={[item.artist, item.album].filter(Boolean).join(' · ')}>{[item.artist, item.album].filter(Boolean).join(' · ') || 'MP3'}<span className="track-size"> · {item.blob.size < 1048576 ? Math.max(1, Math.round(item.blob.size / 1024)) + ' KB' : (item.blob.size / 1048576).toFixed(1) + ' MB'}</span></p></div><button className="track-play" onClick={() => toggleAudio(item)} aria-label={(audioId === item.id ? '暂停 ' : '试听 ') + item.name}>{audioId === item.id ? <PiPauseFill size={13}/> : <PiPlayFill size={13}/>}</button><a className="track-download" href={item.url} download={item.name} aria-label={'下载 ' + item.name}><PiArrowDown size={18}/></a></div>
             </div>)}</div>
           </section>
           {[0, 1, 2].map(i => <img key={i} className="flight-ticket" data-flight src="/machine/ticket.jpg" alt="" aria-hidden="true"/>)}

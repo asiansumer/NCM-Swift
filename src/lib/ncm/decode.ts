@@ -1,6 +1,13 @@
 import CryptoJS from 'crypto-js';
 
-export type AudioMetadata = { title?: string; artist?: string; album?: string };
+import type { Picture, PropertyMap } from 'taglib-wasm';
+
+export type AudioMetadata = {
+  title?: string; artist?: string; album?: string;
+  properties?: PropertyMap;
+  pictures?: Picture[];
+  lyrics?: { text: string; description?: string; language?: string }[];
+};
 export type DecodedNcm = { data: ArrayBuffer; format: 'mp3' | 'flac'; metadata: AudioMetadata };
 
 function decryptAes(bytes: Uint8Array, key: string) {
@@ -45,15 +52,34 @@ export function decodeNcm(buffer: ArrayBuffer): DecodedNcm {
       const plain = new TextDecoder().decode(decryptAes(raw, '2331346c6a6b5f215c5d2630553c2728'));
       const parsed = JSON.parse(plain.slice(plain.indexOf(':') + 1));
       const info = parsed.mainMusic ?? parsed;
+      const strings = (value: unknown): string[] => (Array.isArray(value) ? value : [value])
+        .map(a => Array.isArray(a) ? a[0] : a)
+        .filter((a): a is string => typeof a === 'string' && !!a.trim());
+      const properties: PropertyMap = {};
+      const put = (key: string, value: unknown) => {
+        const values = strings(typeof value === 'number' && Number.isFinite(value) ? String(value) : value);
+        if (values.length) properties[key] = values;
+      };
+      put('title', info.musicName); put('artist', info.artist); put('album', info.album);
+      put('albumArtist', info.albumArtist); put('genre', info.genre);
+      put('trackNumber', info.trackNumber ?? info.trackNo); put('discNumber', info.discNumber ?? info.discNo);
+      put('date', info.year ?? info.date); put('composer', info.composer); put('copyright', info.copyright);
       metadata = {
-        title: typeof info.musicName === 'string' ? info.musicName : undefined,
-        album: typeof info.album === 'string' ? info.album : undefined,
-        artist: typeof info.artist === 'string' ? info.artist : Array.isArray(info.artist) ? info.artist.map((a: unknown) => Array.isArray(a) ? a[0] : a).filter((a: unknown) => typeof a === 'string').join(', ') : undefined,
+        title: properties.title?.[0], album: properties.album?.[0], artist: properties.artist?.join(', '), properties,
       };
     } catch { /* Optional tags must not prevent audio recovery. */ }
   }
   requireBytes(13);
   const coverSpace = view.getUint32(offset + 5, true);
+  const coverLength = view.getUint32(offset + 9, true);
+  // The allocated cover block can be larger than the image. Never include its padding.
+  if (coverLength <= coverSpace && coverLength > 0) {
+    requireBytes(13 + coverSpace);
+    const data = bytes.slice(offset + 13, offset + 13 + coverLength);
+    const mimeType = data[0] === 0xff && data[1] === 0xd8 && data[2] === 0xff ? 'image/jpeg'
+      : data[0] === 0x89 && data[1] === 0x50 && data[2] === 0x4e && data[3] === 0x47 ? 'image/png' : null;
+    if (mimeType) metadata.pictures = [{ data, mimeType, type: 'FrontCover', description: '' }];
+  }
   requireBytes(13 + coverSpace); offset += 13 + coverSpace;
   const audio = bytes.slice(offset);
   if (!audio.length) throw new Error('文件中没有音频');

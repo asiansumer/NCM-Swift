@@ -1,6 +1,6 @@
 import type { DecodedNcm } from './ncm/decode';
 
-export type ConvertedFile = { id: string; name: string; title: string; artist?: string; blob: Blob; url: string };
+export type ConvertedFile = { id: string; name: string; title: string; artist?: string; album?: string; cover?: Blob; coverUrl?: string; blob: Blob; url: string };
 export const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
 function workerRequest<T>(data: object, transfer: Transferable[], signal: AbortSignal, progress?: (value: number) => void): Promise<T> {
@@ -23,9 +23,11 @@ function workerRequest<T>(data: object, transfer: Transferable[], signal: AbortS
 
 export async function convertFile(file: File, signal: AbortSignal, progress: (value: number) => void): Promise<Omit<ConvertedFile, 'id' | 'name' | 'url'>> {
   const buffer = await file.arrayBuffer(); signal.throwIfAborted();
-  const decoded = await workerRequest<DecodedNcm>({ kind: 'decode', buffer }, [buffer], signal);
+  const decoded = await workerRequest<DecodedNcm>({ kind: 'decode', buffer, fallbackTitle: file.name.replace(/\.ncm$/i, '') }, [buffer], signal);
   const title = decoded.metadata.title || file.name.replace(/\.ncm$/i, '');
-  if (decoded.format === 'mp3') return { title, artist: decoded.metadata.artist, blob: new Blob([decoded.data], { type: 'audio/mpeg' }) };
+  const picture = decoded.metadata.pictures?.find(p => p.type === 'FrontCover') ?? decoded.metadata.pictures?.[0];
+  const details = { title, artist: decoded.metadata.artist, album: decoded.metadata.album, cover: picture ? new Blob([new Uint8Array(picture.data)], { type: picture.mimeType }) : undefined };
+  if (decoded.format === 'mp3') return { ...details, blob: new Blob([decoded.data], { type: 'audio/mpeg' }) };
   progress(10);
   const context = new AudioContext({ sampleRate: 44100 });
   const close = () => { if (context.state !== 'closed') void context.close(); };
@@ -39,7 +41,7 @@ export async function convertFile(file: File, signal: AbortSignal, progress: (va
       return output;
     });
     const blob = await workerRequest<Blob>({ kind: 'encode', channels, sampleRate: audio.sampleRate, metadata: { ...decoded.metadata, title } }, channels.map(c => c.buffer), signal, p => progress(10 + p * .9));
-    return { title, artist: decoded.metadata.artist, blob };
+    return { ...details, blob };
   } catch (error) {
     if (signal.aborted) throw new DOMException('已取消', 'AbortError');
     if (error instanceof DOMException && error.name === 'EncodingError') throw new Error('浏览器无法解码此音频，请使用最新版 Chrome 或 Safari');

@@ -9,7 +9,8 @@ Production: https://www.ncmswift.xyz
 Choose or drop `.ncm` files. Conversion starts automatically. Preview, download individual files, or select files and download a ZIP.
 
 - Audio stays in the browser. No file uploads, accounts, analytics or cover-art requests.
-- NCM containing MP3 preserves the original audio bytes.
+- Embedded artwork and tags (title, artists, album, track/disc, date, genre and existing lyrics) are carried into the output. Existing audio tags take precedence; NCM tags fill missing fields. If neither container contains artwork, the list shows a neutral placeholder. No remote covers are fetched.
+- NCM containing MP3 preserves its audio stream; its tag container is updated where necessary.
 - NCM containing FLAC is decoded locally and encoded as 320 kbps MP3. This is a lossy conversion; it does not improve the source quality.
 - Files are processed sequentially in workers. Cancel keeps completed files.
 - Limits: 100 MB per file, 100 files / 500 MB per batch. Results are temporary and are cleared when the page closes or a new batch starts.
@@ -18,7 +19,7 @@ Choose or drop `.ncm` files. Conversion starts automatically. Preview, download 
 
 ## Development
 
-Node 22.18+ (Node 24 LTS recommended).
+Node 24+ and ffmpeg/ffprobe for metadata regression tests.
 
 ```sh
 npm ci
@@ -30,7 +31,7 @@ npm run build
 
 `/` is the converter. Legacy `/convert`, `/machine` and `/contact` links redirect to `/`.
 
-The synthetic fixtures in `tests/fixtures` contain original test tones. Regenerate with `node tools/create-test-fixtures.mjs` (requires ffmpeg). Tests compare recovered bytes with the source MP3/FLAC and check malformed files. Browser QA also covers FLAC → MP3, mixed batches, playback and ZIP output.
+The synthetic fixtures in `tests/fixtures` contain original test tones. Regenerate with `node tools/create-test-fixtures.mjs` (requires ffmpeg). Tests compare recovered bytes with the source MP3/FLAC, check malformed files, and use ffprobe to independently inspect exported metadata and artwork. They run the same TagLib Emscripten backend used in the browser, including ID3v2.3/v2.4 tag preservation and FLAC-to-MP3 metadata transfer. Browser QA also covers FLAC → MP3, mixed batches, playback and ZIP output.
 
 The Blender-authored model can be rebuilt with `tools/build_machine.py`. See `public/machine/ASSETS.md` for asset credits.
 
@@ -41,3 +42,5 @@ GitHub repository: `asiansumer/NCM-Swift`, production branch `master`. The exist
 ## Third-party notices
 
 MP3 encoding uses [`@breezystack/lamejs` 1.2.7](https://github.com/shijinyu/lamejs), licensed under LGPL-3.0. The encoder is based on [LAME](https://lame.sourceforge.net/). Its upstream notice and the full LGPL/GPL texts are distributed under `/licenses/`; corresponding source is available from the linked repository and the pinned npm package. The application source and lockfile are public, so this library can be replaced and the app rebuilt.
+
+Metadata uses [`taglib-wasm` 2.4.0](https://github.com/CharlesWiltgen/TagLib-Wasm): JavaScript/TypeScript under MIT and unmodified TagLib WebAssembly under LGPL-2.1-or-later. Both notices are in `/licenses/`. The WASM is shipped as a separate webpack asset, not embedded into application code. To replace it, build a modified TagLib-Wasm from the linked source, substitute `dist/taglib-web.wasm` in the package, and rebuild this public application. The lockfile records the exact package. `browser-id3-writer` is used only to construct independent regression fixtures.

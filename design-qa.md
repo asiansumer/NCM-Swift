@@ -1,6 +1,6 @@
 # Release QA — minimal NCM → MP3 converter
 
-final result: passed
+final result: passed for the original minimal-converter scope; metadata regression corrected in the addendum below.
 
 ## Scope and visual truth
 
@@ -43,3 +43,21 @@ Tests use original synthetic NCM fixtures, not a user's music library. Responsiv
 ## Production smoke check
 
 The deployed site at https://www.ncmswift.xyz successfully converted the synthetic FLAC-containing NCM to a 122 KB MP3. The machine, result row, preview and download controls rendered with no browser console errors. The apex domain redirects to www.
+
+
+## Metadata regression fix — 2026-10-14
+
+The prior release recovered audio but discarded the NCM image block and did not write NCM tags into native MP3 output. The earlier five decoder tests did not cover exported tags. This addendum supersedes the old whole-file MP3 hash claim: audio remains unchanged, while missing metadata is now added to the tag container.
+
+- Extract the exact embedded JPEG/PNG bytes, excluding cover-block padding.
+- Preserve existing native MP3 tags, custom frames, lyrics and artwork; supplement missing fields from NCM. Multi-value artists are retained as separate values.
+- Transfer FLAC tags, artwork and lyrics into the encoded MP3, with source tags taking priority.
+- Result rows display the source artwork, title, artists and album. Paper cards settle before crossfading into artwork. Missing artwork uses a neutral music-note placeholder. Cover object URLs share the existing clear/unmount cleanup.
+- Ten automated tests pass against the browser/Emscripten backend, including independent ffprobe output inspection, JPEG/PNG extraction, ID3v2.3/v2.4 preservation, private/custom frames, Chinese text, track/disc/date, multiple artists, lyrics, audio integrity and ZIP byte equality.
+- Production build, TypeScript, ESLint and diff whitespace checks pass. Runtime dependency audit reports zero vulnerabilities; the previously documented dev-only ESLint findings remain.
+- Browser mixed batch: two actual successful conversions (MP3-containing NCM and FLAC-containing NCM), both cover images decoded at their original 512 px width; no console errors/warnings.
+- Both single downloads were inspected with ffprobe and TagLib. The embedded artwork SHA-256 matches the source: c9d954893a3b6a443e65e6e159c4d469f3880600c62b6566bd2ac50987feb0c8.
+- Actual downloaded ZIP contains byte-identical copies of both single downloads.
+- Desktop result capture: ../../outputs/metadata-check/desktop-results.png. Mobile result capture: ../../outputs/metadata-check/mobile-results.png (390 × 844); no horizontal overflow. Download details: download-verification.json and zip-verification.json in the same directory.
+
+No real user music was accessed. Fixtures are synthetic tones and an existing project artwork asset. No remote artwork requests or platform integration were added. If the original file contains no embedded artwork, it cannot be restored offline. Physical mobile devices and other browser engines remain outside this run's verification.

@@ -7,11 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint src",
-    "test": "node --test tests/conversion.test.ts"
+    "test": "node --conditions=browser --test tests/*.test.ts"
   },
   "dependencies": {
     "@breezystack/lamejs": "1.2.7",
-    "browser-id3-writer": "^6.2.0",
     "crypto-js": "^4.2.0",
     "jszip": "^3.10.1",
     "next": "15.5.27",
@@ -19,21 +18,23 @@
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
     "react-icons": "^5.5.0",
+    "taglib-wasm": "2.4.0",
     "three": "0.180.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/crypto-js": "^4.2.0",
     "@types/node": "^20.19.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "0.180.0",
+    "browser-id3-writer": "6.2.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.27",
-    "typescript": "^5",
-    "@types/crypto-js": "^4.2.0"
+    "typescript": "^5"
   },
   "engines": {
-    "node": ">=22.18.0"
+    "node": ">=24.0.0"
   },
   "overrides": {
     "postcss": "8.5.30",

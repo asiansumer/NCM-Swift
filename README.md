@@ -40,4 +40,4 @@ GitHub repository: `asiansumer/NCM-Swift`, production branch `master`. The exist
 
 ## Third-party notices
 
-MP3 encoding uses [`@breezystack/lamejs` 1.2.7](https://github.com/shijinyu/lamejs), licensed under LGPL-3.0. Its license is distributed at `/licenses/lamejs-LICENSE.txt`; corresponding source is available from the linked repository and the pinned npm package. The application source and lockfile are public, so this library can be replaced and the app rebuilt.
+MP3 encoding uses [`@breezystack/lamejs` 1.2.7](https://github.com/shijinyu/lamejs), licensed under LGPL-3.0. The encoder is based on [LAME](https://lame.sourceforge.net/). Its upstream notice and the full LGPL/GPL texts are distributed under `/licenses/`; corresponding source is available from the linked repository and the pinned npm package. The application source and lockfile are public, so this library can be replaced and the app rebuilt.

@@ -1,6 +1,6 @@
 import type { DecodedNcm } from './ncm/decode';
 
-export type ConvertedFile = { id: string; name: string; title: string; artist?: string; album?: string; cover?: Blob; coverUrl?: string; blob: Blob; url: string };
+export type ConvertedFile = { id: string; name: string; title: string; artist?: string; album?: string; cover?: Blob; coverUrl?: string; artworkUnavailable?: boolean; blob: Blob; url: string };
 export const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
 function workerRequest<T>(data: object, transfer: Transferable[], signal: AbortSignal, progress?: (value: number) => void): Promise<T> {
@@ -26,7 +26,7 @@ export async function convertFile(file: File, signal: AbortSignal, progress: (va
   const decoded = await workerRequest<DecodedNcm>({ kind: 'decode', buffer, fallbackTitle: file.name.replace(/\.ncm$/i, '') }, [buffer], signal);
   const title = decoded.metadata.title || file.name.replace(/\.ncm$/i, '');
   const picture = decoded.metadata.pictures?.find(p => p.type === 'FrontCover') ?? decoded.metadata.pictures?.[0];
-  const details = { title, artist: decoded.metadata.artist, album: decoded.metadata.album, cover: picture ? new Blob([new Uint8Array(picture.data)], { type: picture.mimeType }) : undefined };
+  const details = { title, artist: decoded.metadata.artist, album: decoded.metadata.album, artworkUnavailable: decoded.metadata.artworkUnavailable, cover: picture ? new Blob([new Uint8Array(picture.data)], { type: picture.mimeType }) : undefined };
   if (decoded.format === 'mp3') return { ...details, blob: new Blob([decoded.data], { type: 'audio/mpeg' }) };
   progress(10);
   const context = new AudioContext({ sampleRate: 44100 });

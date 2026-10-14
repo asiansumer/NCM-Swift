@@ -1,12 +1,15 @@
 import CryptoJS from 'crypto-js';
 
 import type { Picture, PropertyMap } from 'taglib-wasm';
+import { artworkMime, artworkUrl } from './artwork.ts';
 
 export type AudioMetadata = {
   title?: string; artist?: string; album?: string;
   properties?: PropertyMap;
   pictures?: Picture[];
   lyrics?: { text: string; description?: string; language?: string }[];
+  artworkUrl?: string;
+  artworkUnavailable?: boolean;
 };
 export type DecodedNcm = { data: ArrayBuffer; format: 'mp3' | 'flac'; metadata: AudioMetadata };
 
@@ -66,6 +69,7 @@ export function decodeNcm(buffer: ArrayBuffer): DecodedNcm {
       put('date', info.year ?? info.date); put('composer', info.composer); put('copyright', info.copyright);
       metadata = {
         title: properties.title?.[0], album: properties.album?.[0], artist: properties.artist?.join(', '), properties,
+        artworkUrl: artworkUrl(info.albumPic ?? info.albumPicUrl ?? parsed.albumPic),
       };
     } catch { /* Optional tags must not prevent audio recovery. */ }
   }
@@ -76,8 +80,7 @@ export function decodeNcm(buffer: ArrayBuffer): DecodedNcm {
   if (coverLength <= coverSpace && coverLength > 0) {
     requireBytes(13 + coverSpace);
     const data = bytes.slice(offset + 13, offset + 13 + coverLength);
-    const mimeType = data[0] === 0xff && data[1] === 0xd8 && data[2] === 0xff ? 'image/jpeg'
-      : data[0] === 0x89 && data[1] === 0x50 && data[2] === 0x4e && data[3] === 0x47 ? 'image/png' : null;
+    const mimeType = artworkMime(data);
     if (mimeType) metadata.pictures = [{ data, mimeType, type: 'FrontCover', description: '' }];
   }
   requireBytes(13 + coverSpace); offset += 13 + coverSpace;

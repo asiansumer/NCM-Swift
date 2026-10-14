@@ -93,6 +93,8 @@ export default function Converter() {
     if (abort.signal.aborted) return;
     controller.current = null; processing.current = false; count.current = Math.min(completed.length, 3);
     setSelected(completed.map(item => item.id));
+    const missingArtwork = completed.filter(item => item.artworkUnavailable).length;
+    if (missingArtwork) setMessage(`${missingArtwork} 首封面暂时无法获取，音频可正常下载。联网后可重新转换。`);
     if (!completed.length) { playing.current = false; time.current = 0; setPhase('idle'); }
   }, [clearResults, zipBusy]);
   const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
@@ -156,7 +158,7 @@ export default function Converter() {
         </div>
         {isDragActive && <div className="drop-overlay"><PiPlus size={30}/><span>松开，开始转换</span></div>}
       </section>
-      <footer className="machine-footer"><span>文件仅在你的设备上处理</span><a href="https://github.com/asiansumer/NCM-Swift" target="_blank" rel="noopener noreferrer" aria-label="查看源代码与开源许可">© {new Date().getFullYear()} NCM SWIFT</a></footer>
+      <footer className="machine-footer"><span title="音频文件不上传；缺少内嵌封面时，仅按文件自带地址从网易云图片 CDN 获取封面。">音频本地处理 · 联网补全封面</span><a href="https://github.com/asiansumer/NCM-Swift" target="_blank" rel="noopener noreferrer" aria-label="查看源代码与开源许可">© {new Date().getFullYear()} NCM SWIFT</a></footer>
     </div>
   </div>;
 }

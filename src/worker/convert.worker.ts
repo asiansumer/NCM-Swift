@@ -1,12 +1,13 @@
 import { decodeNcm, type AudioMetadata } from '../lib/ncm/decode';
 import { restoreMetadata } from '../lib/ncm/metadata';
 import { encodeMp3 } from '../lib/ncm/encode';
+import { fetchArtwork } from '../lib/ncm/artwork';
 
 type Request = { kind: 'decode'; buffer: ArrayBuffer; fallbackTitle: string } | { kind: 'encode'; channels: Int16Array[]; sampleRate: number; metadata: AudioMetadata };
 self.onmessage = async ({ data }: MessageEvent<Request>) => {
   try {
     if (data.kind === 'decode') {
-      const result = await restoreMetadata(decodeNcm(data.buffer), data.fallbackTitle);
+      const result = await restoreMetadata(decodeNcm(data.buffer), data.fallbackTitle, fetchArtwork);
       self.postMessage({ kind: 'done', result }, { transfer: [result.data] });
       return;
     }

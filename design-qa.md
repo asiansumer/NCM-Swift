@@ -61,3 +61,16 @@ The prior release recovered audio but discarded the NCM image block and did not 
 - Desktop result capture: ../../outputs/metadata-check/desktop-results.png. Mobile result capture: ../../outputs/metadata-check/mobile-results.png (390 × 844); no horizontal overflow. Download details: download-verification.json and zip-verification.json in the same directory.
 
 No real user music was accessed. Fixtures are synthetic tones and an existing project artwork asset. No remote artwork requests or platform integration were added. If the original file contains no embedded artwork, it cannot be restored offline. Physical mobile devices and other browser engines remain outside this run's verification.
+
+
+## URL-only artwork correction — 2026-10-14
+
+The previous metadata release still missed a real NCM variant: an allocated cover block with zero image bytes and only an `albumPic` address. This was reproduced using the user's specifically provided original file, without modifying it. The 7,550-byte reserved block contained zero artwork bytes and the decrypted MP3 also had no picture. Its metadata supplied a NetEase CDN JPEG URL.
+
+- Preserve and validate `albumPic`, normalize HTTP to HTTPS, then fetch only when neither the NCM nor audio contains artwork. Requests omit credentials and referrers. Images are embedded into MP3 output, not merely linked for display.
+- Artwork requests are bounded to 4.5 seconds and 8 MiB, with MIME magic checks. Invalid or unavailable responses keep audio conversion usable and produce a concise warning. The footer now accurately discloses online artwork completion.
+- Sixteen automated regression tests pass; build, TypeScript and lint pass.
+- Browser local verification used the real reported file plus a URL-only FLAC fixture. Both covers loaded without console errors: 800 × 800 and 500 × 500.
+- The real browser download contains a JPEG APIC picture (46,947 bytes, 800 × 800), verified independently by ffprobe/ffmpeg. The embedded JPEG SHA-256 matches the retrieved original image: c9bb5c0b588779b097cf059dbe4387e49053dae96f4e43fdf8d1ed9f0a5075f1.
+- Encoded audio-payload SHA-256 before and after is identical: 115b32e66759f82ddf4f03a0200bd0ecc69fa942a273ce430cb87c363d849c49 (8,313,207 audio bytes).
+- Local evidence: ../../outputs/url-artwork-check/real-song-local.png and real-song-verification.json. No user audio is committed.
